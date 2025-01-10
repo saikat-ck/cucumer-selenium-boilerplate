@@ -11,13 +11,13 @@ public class Homepage {
         PageFactory.initElements(driver, this);
     }
 
-    @FindBy(id = "logo_homepage_link")
+    @FindBy(css = "div.is-not-mobile-device>div:nth-of-type(2) [title='Learn about DuckDuckGo']")
     public WebElement logoHomepage;
 
-    @FindBy(css = "#search_form_input_homepage")
+    @FindBy(css = "#searchbox_input")
     public WebElement searchBar;
 
-    @FindBy(id = "search_button_homepage")
+    @FindBy(css = "[aria-label='Search']")
     public WebElement searchButton;
 
 }

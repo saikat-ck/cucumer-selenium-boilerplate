@@ -7,10 +7,10 @@ import org.openqa.selenium.support.PageFactory;
 
 public class Searchresults {
 
-    public Searchresults(WebDriver driver)  {
+    public Searchresults(WebDriver driver) {
         PageFactory.initElements(driver, this);
     }
 
-    @FindBy(css = "span.module__title__link")
+    @FindBy(xpath = "//h2[text()='Duck']")
     public WebElement sidebarTitle;
 }

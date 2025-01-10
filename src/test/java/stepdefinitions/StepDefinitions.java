@@ -1,69 +1,95 @@
 package stepdefinitions;
 
-import io.cucumber.java.Scenario;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
-import io.cucumber.java.After;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
+
 import org.junit.Assert;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
+
+import io.cucumber.java.After;
+import io.cucumber.java.AfterStep;
+import io.cucumber.java.Before;
+import io.cucumber.java.Scenario;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
+import pageobjects.AutomationStore;
 import pageobjects.Homepage;
 import pageobjects.Searchresults;
-import pageobjects.AutomationStore;
 import utils.FileUtils;
 import utils.Validations;
 import utils.Waits;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
 public class StepDefinitions {
 
     private WebDriver driver;
+    int currentStepIndex = 0;
+    Properties prop;
 
-    public void startDriver(String url){
+    public void startDriver(String url) {
 
-        System.setProperty("webdriver.chrome.driver", new File("chromedriver.exe").getPath());
         driver = new ChromeDriver();
         driver.get(url);
         driver.manage().window().maximize();
 
     }
 
-    @After
-    public void tearDown(Scenario scenario) throws IOException {
+    @Before
+    public void initializeConfiguration() throws IOException {
+        prop = new Properties();
+        prop.load(new FileInputStream(new File("src/test/resources/userdata/config.properties")));
+    }
 
-        if(scenario.isFailed()){
-            FileUtils fileUtils = new FileUtils();
-            fileUtils.addScreenshot(scenario, driver);
-        }
+    @AfterStep
+    public void aterStepActions(Scenario scenario) throws IOException,
+            NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        FileUtils fileUtils = new FileUtils();
+        fileUtils.addScreenshot(currentStepIndex, scenario, driver);
+        currentStepIndex += 1;
+    }
+
+    @After
+    public void tearDown(Scenario scenario) {
+        // if (scenario.isFailed()) {
+        // FileUtils fileUtils = new FileUtils();
+        // fileUtils.addScreenshot(currentStepIndex, scenario, driver);
+        // }
 
         driver.quit();
 
     }
 
-    @Given("the site {string} is open")
+    @Given("^the site \"(.+)\" is open$")
     public void theSiteDuckDuckGoIsOpen(String site) {
         String url = "";
 
-        switch (site.toLowerCase()){
+        switch (site.toLowerCase()) {
             case "duckduckgo":
                 url = "https://duckduckgo.com/";
                 break;
             case "automation practise store":
-                url = "http://automationpractice.com/";
+                url = "http://www.automationpractice.pl/index.php";
+                break;
+            case "<parameter1>":
+                if (prop.getProperty("parameter1").equalsIgnoreCase("duckduckgo")) {
+                    url = "https://duckduckgo.com/";
+                }
                 break;
             default:
-                Assert.fail("Something is wrong. The website '" + site + "' you are trying to open in not recognised. ");
+                Assert.fail(
+                        "Something is wrong. The website '" + site + "' you are trying to open in not recognised. ");
         }
 
         startDriver(url);
         Waits waits = new Waits(driver);
 
-        switch (site.toLowerCase()){
+        switch (site.toLowerCase()) {
             case "duckduckgo":
                 Homepage homepage = new Homepage(driver);
                 waits.waitForElement(homepage.logoHomepage);
@@ -73,7 +99,8 @@ public class StepDefinitions {
                 waits.waitForElement(automationStore.logoStore);
                 break;
             default:
-                System.out.println("Something is wrong. The website '" + site + "' you are trying to open in not recognised. ");
+                System.out.println(
+                        "Something is wrong. The website '" + site + "' you are trying to open in not recognised. ");
         }
     }
 
@@ -88,22 +115,28 @@ public class StepDefinitions {
 
     }
 
-    @When("I search for {string}")
+    @When("^I search for \"(.+)\"$")
     public void iSearchFor(String searchObject) {
 
         Homepage homepage = new Homepage(driver);
+        if (searchObject.matches("<parameter2>")) {
+            searchObject = prop.getProperty("parameter2");
+        }
         homepage.searchBar.sendKeys(searchObject);
         homepage.searchButton.click();
 
     }
 
-    @Then("I can see the search results for {string}")
+    @Then("^I can see the search results for \"(.+)\"$")
     public void iCanSeeTheSearchResultsFor(String searchObject) {
 
         Waits waits = new Waits(driver);
         Searchresults searchresults = new Searchresults(driver);
 
         waits.waitForElement(searchresults.sidebarTitle);
+        if (searchObject.matches("<parameter2>")) {
+            searchObject = prop.getProperty("parameter2");
+        }
         Assert.assertEquals(searchObject, searchresults.sidebarTitle.getText().toLowerCase());
 
     }
